@@ -1,0 +1,57 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct {
+
+} Task;
+
+typedef struct {
+    Task *tasks;
+    size_t size;
+  
+} TaskScheduler;
+
+TaskScheduler CreateTaskScheduler() {
+    TaskScheduler scheduler;
+    scheduler.tasks = NULL;
+    scheduler.size = 0;
+    return scheduler;
+}
+
+void AddTask(TaskScheduler *scheduler, Task task) {
+    scheduler->tasks = realloc(scheduler->tasks, (scheduler->size + 1) * sizeof(Task));
+    scheduler->tasks[scheduler->size] = task;
+    scheduler->size++;
+}
+
+void ExecuteNext(TaskScheduler *scheduler) {
+    if (scheduler->size > 0) {
+        Task nextTask = scheduler->tasks[0];
+   
+        printf("Executing task...\n");
+
+        for (size_t i = 1; i < scheduler->size; i++) {
+            scheduler->tasks[i - 1] = scheduler->tasks[i];
+        }
+        scheduler->size--;
+    }
+}
+
+int main() {
+    TaskScheduler scheduler = CreateTaskScheduler();
+
+    Task task1;
+    Task task2;
+ 
+
+    AddTask(&scheduler, task1);
+    AddTask(&scheduler, task2);
+
+    
+    ExecuteNext(&scheduler);
+
+ 
+    free(scheduler.tasks);
+
+    return 0;
+}
