@@ -1,58 +1,64 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+using System;
+using System.Collections.Generic;
 
-typedef struct {
-    char *key;
-    int value;
-} CacheItem;
+class FunctionCache<TKey, TResult>
+{
+    private Dictionary<TKey, TResult> cache = new Dictionary<TKey, TResult>();
+    private Dictionary<TKey, DateTime> expirationTimes = new Dictionary<TKey, DateTime>();
+    private TimeSpan cacheDuration;
 
-typedef struct {
-    CacheItem *cache;
-    size_t size;
-} FunctionCache;
+    public FunctionCache(TimeSpan cacheDuration)
+    {
+        this.cacheDuration = cacheDuration;
+    }
 
-FunctionCache CreateCache() {
-    FunctionCache cache;
-    cache.cache = NULL;
-    cache.size = 0;
-    return cache;
-}
+    public TResult GetOrCompute(TKey key, Func<TKey, TResult> computeFunction)
+    {
+        if (cache.ContainsKey(key) && DateTime.Now - expirationTimes[key] <= cacheDuration)
+        {
+            return cache[key];
+        }
 
-int GetValue(FunctionCache *cache, char *key, int (*computeFunc)(char *)) {
-    for (size_t i = 0; i < cache->size; i++) {
-        if (strcmp(cache->cache[i].key, key) == 0) {
-            return cache->cache[i].value;
+        TResult result = computeFunction(key);
+        cache[key] = result;
+        expirationTimes[key] = DateTime.Now;
+        return result;
+    }
+
+    public void ClearExpiredItems()
+    {
+        List<TKey> expiredKeys = new List<TKey>();
+        foreach (var kvp in expirationTimes)
+        {
+            if (DateTime.Now - kvp.Value > cacheDuration)
+            {
+                expiredKeys.Add(kvp.Key);
+            }
+        }
+
+        foreach (var key in expiredKeys)
+        {
+            cache.Remove(key);
+            expirationTimes.Remove(key);
         }
     }
-
-    int computedValue = computeFunc(key);
-
-    cache->cache = realloc(cache->cache, (cache->size + 1) * sizeof(CacheItem));
-    cache->cache[cache->size].key = strdup(key);
-    cache->cache[cache->size].value = computedValue;
-    cache->size++;
-
-    return computedValue;
 }
 
-int LengthFunc(char *str) {
-    return (int)strlen(str);
-}
+class Program
+{
+    static void Main()
+    {
+        FunctionCache<string, int> cache = new FunctionCache<string, int>(TimeSpan.FromMinutes(1));
 
-int main() {
-    FunctionCache cache = CreateCache();
+        Func<string, int> expensiveComputation = key =>
+        {
+            return key.Length * 2;
+        };
 
-    int length = GetValue(&cache, "Hello", LengthFunc);
-    printf("Length of 'Hello': %d\n", length);
+        Console.WriteLine(cache.GetOrCompute("apple", expensiveComputation));
+        Console.WriteLine(cache.GetOrCompute("apple", expensiveComputation));
 
-    int length2 = GetValue(&cache, "World", LengthFunc);
-    printf("Length of 'World': %d\n", length2);
-
-    for (size_t i = 0; i < cache.size; i++) {
-        free(cache.cache[i].key);
+        System.Threading.Thread.Sleep(60000);
+        cache.ClearExpiredItems();
     }
-    free(cache.cache);
-
-    return 0;
 }
