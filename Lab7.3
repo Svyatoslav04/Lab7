@@ -1,0 +1,58 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct {
+    char *key;
+    int value;
+} CacheItem;
+
+typedef struct {
+    CacheItem *cache;
+    size_t size;
+} FunctionCache;
+
+FunctionCache CreateCache() {
+    FunctionCache cache;
+    cache.cache = NULL;
+    cache.size = 0;
+    return cache;
+}
+
+int GetValue(FunctionCache *cache, char *key, int (*computeFunc)(char *)) {
+    for (size_t i = 0; i < cache->size; i++) {
+        if (strcmp(cache->cache[i].key, key) == 0) {
+            return cache->cache[i].value;
+        }
+    }
+
+    int computedValue = computeFunc(key);
+
+    cache->cache = realloc(cache->cache, (cache->size + 1) * sizeof(CacheItem));
+    cache->cache[cache->size].key = strdup(key);
+    cache->cache[cache->size].value = computedValue;
+    cache->size++;
+
+    return computedValue;
+}
+
+int LengthFunc(char *str) {
+    return (int)strlen(str);
+}
+
+int main() {
+    FunctionCache cache = CreateCache();
+
+    int length = GetValue(&cache, "Hello", LengthFunc);
+    printf("Length of 'Hello': %d\n", length);
+
+    int length2 = GetValue(&cache, "World", LengthFunc);
+    printf("Length of 'World': %d\n", length2);
+
+    for (size_t i = 0; i < cache.size; i++) {
+        free(cache.cache[i].key);
+    }
+    free(cache.cache);
+
+    return 0;
+}
