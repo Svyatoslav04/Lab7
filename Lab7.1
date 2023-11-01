@@ -1,0 +1,57 @@
+#include <stdio.h>
+
+typedef struct {
+    double result;
+} CalculatorResult;
+
+typedef struct {
+    CalculatorResult (*Add)(double, double);
+    CalculatorResult (*Subtract)(double, double);
+    CalculatorResult (*Multiply)(double, double);
+    CalculatorResult (*Divide)(double, double);
+} Calculator;
+
+CalculatorResult Add(double a, double b) {
+    CalculatorResult result;
+    result.result = a + b;
+    return result;
+}
+
+CalculatorResult Subtract(double a, double b) {
+    CalculatorResult result;
+    result.result = a - b;
+    return result;
+}
+
+CalculatorResult Multiply(double a, double b) {
+    CalculatorResult result;
+    result.result = a * b;
+    return result;
+}
+
+CalculatorResult Divide(double a, double b) {
+    CalculatorResult result;
+    if (b != 0) {
+        result.result = a / b;
+    } else {
+        printf("Division by zero\n");
+    }
+    return result;
+}
+
+int main() {
+    Calculator calculator;
+    calculator.Add = &Add;
+    calculator.Subtract = &Subtract;
+    calculator.Multiply = &Multiply;
+    calculator.Divide = &Divide;
+
+    double num1 = 5.0;
+    double num2 = 2.5;
+
+    CalculatorResult result = calculator.Add(num1, num2);
+
+    printf("Addition result: %lf\n", result.result);
+
+    return 0;
+}
