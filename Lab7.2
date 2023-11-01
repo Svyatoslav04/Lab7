@@ -1,0 +1,55 @@
+#include <stdio.h>
+#include <stdbool.h>
+
+typedef struct {
+    int id;
+    char name[50];
+} Item;
+
+typedef struct {
+    Item *data;
+    size_t size;
+} Repository;
+
+Repository CreateRepository() {
+    Repository repo;
+    repo.data = NULL;
+    repo.size = 0;
+    return repo;
+}
+
+void AddItem(Repository *repo, Item item) {
+    repo->data = realloc(repo->data, (repo->size + 1) * sizeof(Item));
+    repo->data[repo->size] = item;
+    repo->size++;
+}
+
+bool IsEven(Item item) {
+    return item.id % 2 == 0;
+}
+
+void FindItems(Repository repo, bool (*criteria)(Item)) {
+    for (size_t i = 0; i < repo.size; i++) {
+        if (criteria(repo.data[i])) {
+            printf("ID: %d, Name: %s\n", repo.data[i].id, repo.data[i].name);
+        }
+    }
+}
+
+int main() {
+    Repository repository = CreateRepository();
+
+    Item item1 = {1, "Item 1"};
+    Item item2 = {2, "Item 2"};
+    Item item3 = {3, "Item 3"};
+
+    AddItem(&repository, item1);
+    AddItem(&repository, item2);
+    AddItem(&repository, item3);
+
+    printf("Even items:\n");
+    FindItems(repository, IsEven);
+
+    free(repository.data);
+    return 0;
+}
