@@ -1,55 +1,47 @@
-#include <stdio.h>
-#include <stdbool.h>
+using System;
+using System.Collections.Generic;
 
-typedef struct {
-    int id;
-    char name[50];
-} Item;
+class Repository<T>
+{
+    private List<T> items = new List<T>();
 
-typedef struct {
-    Item *data;
-    size_t size;
-} Repository;
+    public void Add(T item)
+    {
+        items.Add(item);
+    }
 
-Repository CreateRepository() {
-    Repository repo;
-    repo.data = NULL;
-    repo.size = 0;
-    return repo;
-}
-
-void AddItem(Repository *repo, Item item) {
-    repo->data = realloc(repo->data, (repo->size + 1) * sizeof(Item));
-    repo->data[repo->size] = item;
-    repo->size++;
-}
-
-bool IsEven(Item item) {
-    return item.id % 2 == 0;
-}
-
-void FindItems(Repository repo, bool (*criteria)(Item)) {
-    for (size_t i = 0; i < repo.size; i++) {
-        if (criteria(repo.data[i])) {
-            printf("ID: %d, Name: %s\n", repo.data[i].id, repo.data[i].name);
-        }
+    public List<T> Find(Func<T, bool> criteria)
+    {
+        return items.FindAll(criteria);
     }
 }
 
-int main() {
-    Repository repository = CreateRepository();
+class Program
+{
+    static void Main()
+    {
+        Repository<string> stringRepository = new Repository<string>();
+        stringRepository.Add("Apple");
+        stringRepository.Add("Banana");
+        stringRepository.Add("Cherry");
 
-    Item item1 = {1, "Item 1"};
-    Item item2 = {2, "Item 2"};
-    Item item3 = {3, "Item 3"};
+        Console.WriteLine("Fruits starting with 'A':");
+        var results = stringRepository.Find(item => item.StartsWith("A"));
+        foreach (var item in results)
+        {
+            Console.WriteLine(item);
+        }
 
-    AddItem(&repository, item1);
-    AddItem(&repository, item2);
-    AddItem(&repository, item3);
+        Repository<int> intRepository = new Repository<int>();
+        intRepository.Add(10);
+        intRepository.Add(20);
+        intRepository.Add(30);
 
-    printf("Even items:\n");
-    FindItems(repository, IsEven);
-
-    free(repository.data);
-    return 0;
+        Console.WriteLine("\nNumbers greater than 15:");
+        var intResults = intRepository.Find(item => item > 15);
+        foreach (var item in intResults)
+        {
+            Console.WriteLine(item);
+        }
+    }
 }
