@@ -1,57 +1,70 @@
-#include <stdio.h>
-#include <stdlib.h>
+using System;
+using System.Collections.Generic;
 
-typedef struct {
+class TaskScheduler<TTask, TPriority>
+{
+    private PriorityQueue<TPriority, TTask> taskQueue = new PriorityQueue<TPriority, TTask>();
+    private Func<TTask, TPriority> priorityFunction;
 
-} Task;
+    public TaskScheduler(Func<TTask, TPriority> priorityFunction)
+    {
+        this.priorityFunction = priorityFunction;
+    }
 
-typedef struct {
-    Task *tasks;
-    size_t size;
-  
-} TaskScheduler;
+    public void AddTask(TTask task)
+    {
+        TPriority priority = priorityFunction(task);
+        taskQueue.Enqueue(priority, task);
+    }
 
-TaskScheduler CreateTaskScheduler() {
-    TaskScheduler scheduler;
-    scheduler.tasks = NULL;
-    scheduler.size = 0;
-    return scheduler;
-}
-
-void AddTask(TaskScheduler *scheduler, Task task) {
-    scheduler->tasks = realloc(scheduler->tasks, (scheduler->size + 1) * sizeof(Task));
-    scheduler->tasks[scheduler->size] = task;
-    scheduler->size++;
-}
-
-void ExecuteNext(TaskScheduler *scheduler) {
-    if (scheduler->size > 0) {
-        Task nextTask = scheduler->tasks[0];
-   
-        printf("Executing task...\n");
-
-        for (size_t i = 1; i < scheduler->size; i++) {
-            scheduler->tasks[i - 1] = scheduler->tasks[i];
+    public TTask ExecuteNext()
+    {
+        if (taskQueue.Count == 0)
+        {
+            return default(TTask);
         }
-        scheduler->size--;
+        KeyValuePair<TPriority, TTask> taskEntry = taskQueue.Dequeue();
+        return taskEntry.Value;
     }
 }
 
-int main() {
-    TaskScheduler scheduler = CreateTaskScheduler();
+class PriorityQueue<TPriority, TValue>
+{
+    private SortedDictionary<TPriority, Queue<TValue>> dict = new SortedDictionary<TPriority, Queue<TValue>>();
 
-    Task task1;
-    Task task2;
- 
+    public void Enqueue(TPriority priority, TValue value)
+    {
+        if (!dict.TryGetValue(priority, out var queue))
+        {
+            queue = new Queue<TValue>();
+            dict[priority] = queue;
+        }
+        queue.Enqueue(value);
+    }
 
-    AddTask(&scheduler, task1);
-    AddTask(&scheduler, task2);
+    public KeyValuePair<TPriority, TValue> Dequeue()
+    {
+        var firstPair = dict.First();
+        var value = firstPair.Value.Dequeue();
+        if (firstPair.Value.Count == 0)
+            dict.Remove(firstPair.Key);
+        return new KeyValuePair<TPriority, TValue>(firstPair.Key, value);
+    }
 
-    
-    ExecuteNext(&scheduler);
+    public int Count => dict.Count;
+}
 
- 
-    free(scheduler.tasks);
+class Program
+{
+    static void Main()
+    {
+        TaskScheduler<string, int> taskScheduler = new TaskScheduler<string, int>(s => s.Length);
 
-    return 0;
+        taskScheduler.AddTask("Task1");
+        taskScheduler.AddTask("Task2");
+        taskScheduler.AddTask("Task3");
+
+        Console.WriteLine(taskScheduler.ExecuteNext());
+        Console.WriteLine(taskScheduler.ExecuteNext());
+    }
 }
