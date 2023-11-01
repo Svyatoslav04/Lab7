@@ -1,57 +1,39 @@
-#include <stdio.h>
+using System;
 
-typedef struct {
-    double result;
-} CalculatorResult;
+class Calculator<T>
+{
+    public delegate T BinaryOperation(T a, T b);
 
-typedef struct {
-    CalculatorResult (*Add)(double, double);
-    CalculatorResult (*Subtract)(double, double);
-    CalculatorResult (*Multiply)(double, double);
-    CalculatorResult (*Divide)(double, double);
-} Calculator;
+    public BinaryOperation Add { get; set; }
+    public BinaryOperation Subtract { get; set; }
+    public BinaryOperation Multiply { get; set; }
+    public BinaryOperation Divide { get; set; }
 
-CalculatorResult Add(double a, double b) {
-    CalculatorResult result;
-    result.result = a + b;
-    return result;
-}
-
-CalculatorResult Subtract(double a, double b) {
-    CalculatorResult result;
-    result.result = a - b;
-    return result;
-}
-
-CalculatorResult Multiply(double a, double b) {
-    CalculatorResult result;
-    result.result = a * b;
-    return result;
-}
-
-CalculatorResult Divide(double a, double b) {
-    CalculatorResult result;
-    if (b != 0) {
-        result.result = a / b;
-    } else {
-        printf("Division by zero\n");
+    public Calculator(BinaryOperation add, BinaryOperation subtract, BinaryOperation multiply, BinaryOperation divide)
+    {
+        Add = add;
+        Subtract = subtract;
+        Multiply = multiply;
+        Divide = divide;
     }
-    return result;
 }
 
-int main() {
-    Calculator calculator;
-    calculator.Add = &Add;
-    calculator.Subtract = &Subtract;
-    calculator.Multiply = &Multiply;
-    calculator.Divide = &Divide;
+class Program
+{
+    static void Main()
+    {
+        Calculator<int> intCalculator = new Calculator<int>((a, b) => a + b, (a, b) => a - b, (a, b) => a * b, (a, b) => a / b);
+        Console.WriteLine("Integer Calculator:");
+        Console.WriteLine($"Add: {intCalculator.Add(5, 3)}");
+        Console.WriteLine($"Subtract: {intCalculator.Subtract(5, 3)}");
+        Console.WriteLine($"Multiply: {intCalculator.Multiply(5, 3)}");
+        Console.WriteLine($"Divide: {intCalculator.Divide(6, 3)}");
 
-    double num1 = 5.0;
-    double num2 = 2.5;
-
-    CalculatorResult result = calculator.Add(num1, num2);
-
-    printf("Addition result: %lf\n", result.result);
-
-    return 0;
+        Calculator<double> doubleCalculator = new Calculator<double>((a, b) => a + b, (a, b) => a - b, (a, b) => a * b, (a, b) => a / b);
+        Console.WriteLine("\nDouble Calculator:");
+        Console.WriteLine($"Add: {doubleCalculator.Add(5.5, 3.3)}");
+        Console.WriteLine($"Subtract: {doubleCalculator.Subtract(5.5, 3.3)}");
+        Console.WriteLine($"Multiply: {doubleCalculator.Multiply(5.5, 3.3)}");
+        Console.WriteLine($"Divide: {doubleCalculator.Divide(6.6, 3.3)}");
+    }
 }
